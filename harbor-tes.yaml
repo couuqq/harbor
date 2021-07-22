@@ -1,0 +1,68 @@
+#vim prometheus-harbor.yaml 
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: harbor-tes
+  namespace: monitoring
+  labels:
+    k8s-app: harbor-tes
+spec:
+  endpoints:
+  - interval: 30s
+    path: /metrics
+    targetPort: 9090
+    port: harbor-tes
+  jobLabel: k8s-app
+#   namespaceSelector:
+#     matchNames:
+#     - kube-system
+
+# spec:
+#   jobLabel: k8s-app
+#   endpoints:
+#   - port: harbor-api
+#     interval: 30s
+#     # scheme: https
+#     # tlsConfig:
+#     #   caFile: /etc/prometheus/secrets/etcd-certs/ca.pem
+#     #   certFile: /etc/prometheus/secrets/etcd-certs/etcd.pem
+#     #   keyFile: /etc/prometheus/secrets/etcd-certs/etcd-key.pem
+#     #   #use insecureSkipVerify only if you cannot use a Subject Alternative Name
+#     #   insecureSkipVerify: true 
+  selector:
+    matchLabels:
+      k8s-app: harbor-tes
+  namespaceSelector:
+    matchNames:
+    - monitoring
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: harbor-tes
+  namespace: monitoring
+  labels:
+    k8s-app: harbor-tes
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - name: harbor-tes
+    port: 9090
+    protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: harbor-tes
+  namespace: monitoring
+  labels:
+    k8s-app: harbor-tes
+subsets:
+- addresses:
+  - ip: 172.29.0.10
+  ports:
+  - name: harbor-tes
+    port: 9090
+    protocol: TCP
